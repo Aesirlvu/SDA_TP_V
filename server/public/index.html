@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suma de Matrices</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .matrices-container {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        .matrix {
+            margin-bottom: 20px;
+        }
+        .matrix-row {
+            display: flex;
+        }
+        input[type="number"] {
+            width: 50px;
+            height: 30px;
+            text-align: center;
+            margin: 2px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        #resultado {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Suma de Matrices</h1>
+        
+        <div class="input-group">
+            <label for="filas">Filas: </label>
+            <input type="number" id="filas" min="1" max="10" value="2">
+            
+            <label for="columnas">Columnas: </label>
+            <input type="number" id="columnas" min="1" max="10" value="2">
+            
+            <button onclick="generarMatrices()">Generar Matrices</button>
+        </div>
+        
+        <div id="matrices" class="matrices-container"></div>
+        
+        <button onclick="calcularSuma()" id="btnCalcular" style="display:none;">Calcular Suma</button>
+        
+        <div id="resultado"></div>
+    </div>
+
+    <script>
+        function generarMatrices() {
+            const filas = parseInt(document.getElementById("filas").value);
+            const columnas = parseInt(document.getElementById("columnas").value);
+            
+            if (isNaN(filas) || isNaN(columnas) || filas < 1 || columnas < 1) {
+                alert("Por favor ingrese dimensiones válidas");
+                return;
+            }
+            
+            const matricesContainer = document.getElementById("matrices");
+            matricesContainer.innerHTML = "";
+            
+            for (let m = 1; m <= 2; m++) {
+                const matrixDiv = document.createElement("div");
+                matrixDiv.className = "matrix";
+                matrixDiv.innerHTML = `<h3>Matriz ${m}</h3>`;
+                
+                for (let i = 0; i < filas; i++) {
+                    const rowDiv = document.createElement("div");
+                    rowDiv.className = "matrix-row";
+                    
+                    for (let j = 0; j < columnas; j++) {
+                        const input = document.createElement("input");
+                        input.type = "number";
+                        input.id = `m${m}-${i}-${j}`;
+                        input.value = "0";
+                        rowDiv.appendChild(input);
+                    }
+                    
+                    matrixDiv.appendChild(rowDiv);
+                }
+                
+                matricesContainer.appendChild(matrixDiv);
+            }
+            
+            // Mostrar el botón de calcular
+            document.getElementById("btnCalcular").style.display = "block";
+        }
+        
+        function calcularSuma() {
+            const filas = parseInt(document.getElementById("filas").value);
+            const columnas = parseInt(document.getElementById("columnas").value);
+            
+            if (isNaN(filas) || isNaN(columnas) || filas < 1 || columnas < 1) {
+                alert("Dimensiones inválidas");
+                return;
+            }
+            
+            // Crear las matrices a partir de los inputs
+            let matriz1 = [], matriz2 = [];
+            
+            for (let i = 0; i < filas; i++) {
+                matriz1[i] = [];
+                matriz2[i] = [];
+                
+                for (let j = 0; j < columnas; j++) {
+                    matriz1[i][j] = parseInt(document.getElementById(`m1-${i}-${j}`).value) || 0;
+                    matriz2[i][j] = parseInt(document.getElementById(`m2-${i}-${j}`).value) || 0;
+                }
+            }
+            
+            // Enviar datos al servidor
+            fetch("http://localhost:3000/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ filas, columnas, matriz1, matriz2 })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.data && data.data.resultado) {
+                    mostrarResultado(data.data.resultado);
+                } else {
+                    document.getElementById("resultado").innerHTML = 
+                        "<p>Error: No se recibió un resultado válido del servidor</p>";
+                }
+            })
+            .catch(error => {
+                document.getElementById("resultado").innerHTML = 
+                    `<p>Error al comunicarse con el servidor: ${error.message}</p>`;
+            });
+        }
+        
+        function mostrarResultado(matriz) {
+            const resultadoDiv = document.getElementById("resultado");
+            resultadoDiv.innerHTML = "<h3>Matriz Resultante</h3>";
+            
+            const table = document.createElement("table");
+            table.style.borderCollapse = "collapse";
+            
+            for (let i = 0; i < matriz.length; i++) {
+                const tr = document.createElement("tr");
+                
+                for (let j = 0; j < matriz[i].length; j++) {
+                    const td = document.createElement("td");
+                    td.textContent = matriz[i][j];
+                    td.style.border = "1px solid black";
+                    td.style.padding = "8px";
+                    td.style.textAlign = "center";
+                    tr.appendChild(td);
+                }
+                
+                table.appendChild(tr);
+            }
+            
+            resultadoDiv.appendChild(table);
+        }
+    </script>
+</body>
+</html>
